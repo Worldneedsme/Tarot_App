@@ -576,6 +576,7 @@ function renderReadout() {
       <div class="kw">${esc(d.rev ? c.rev : c.up)}</div>
     </div>`;
   }).join('');
+  if (done && !reading.sections) reading.sections = interpretReading(reading.cards.map(d => ({ card: BY_ID[d.id], rev: d.rev })));
   if (done) html += summaryHTML(reading);
   $('#readout').innerHTML = html;
   if (done && !reading.ask && $('#askBox').hidden) {
@@ -586,7 +587,7 @@ function renderReadout() {
   if (done && !reading.saved) {
     reading.saved = true;
     const j = store.get();
-    j.unshift({ question: reading.question, spreadId: reading.spreadId, date: reading.date, cards: reading.cards.map(({ id, rev }) => ({ id, rev })) });
+    j.unshift({ question: reading.question, spreadId: reading.spreadId, date: reading.date, cards: reading.cards.map(({ id, rev }) => ({ id, rev })), sections: reading.sections });
     if (store.set(j.slice(0, 200))) toast('Günlüğüne kaydedildi');
   }
 }
@@ -598,7 +599,8 @@ $('#readout').addEventListener('click', e => {
 });
 
 function summaryHTML(r) {
-  const sections = interpretReading(r.cards.map(d => ({ card: BY_ID[d.id], rev: d.rev })));
+  // Yorum açılım bitince bir kez üretilip saklanır; eski kayıtlar için sabit tohumla yeniden üretilir
+  const sections = r.sections || interpretReading(r.cards.map(d => ({ card: BY_ID[d.id], rev: d.rev })), { seed: r.date });
   if (!sections) return '';
   return `<div class="reading-item summary"><h3>Kartlarının hikâyesi</h3>${sections.map(sec =>
     `<h4>${sec.title}</h4>${sec.items.map(t => `<p>${t}</p>`).join('')}`).join('')}</div>`;
@@ -616,7 +618,7 @@ $('#askBtn').addEventListener('click', async () => {
   const q = $('#askQ').value.trim();
   if (!q) { $('#askQ').focus(); return; }
   const spread = SPREADS.find(s => s.id === reading.spreadId);
-  const sections = interpretReading(reading.cards.map(d => ({ card: BY_ID[d.id], rev: d.rev }))) || [];
+  const sections = reading.sections || [];
   const payload = {
     question: q,
     spread: spread.name,
