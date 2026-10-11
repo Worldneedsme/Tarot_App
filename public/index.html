@@ -169,6 +169,56 @@
   .btn:disabled { opacity: .6; cursor: default; }
   .answer .q { font-style: italic; color: var(--muted); margin: 2px 0 8px; }
   .answer p { margin: 8px 0; }
+  /* Yükleme sahnesi: rüzgâr, yapraklar ve keşiş */
+  .wind-scene svg { display: block; width: 100%; max-width: 360px; margin: 4px auto 0; overflow: hidden; }
+  .wind-scene .loading-text { margin: 4px 0 2px; font-style: italic; }
+  .wind-scene .gust { fill: none; stroke: var(--muted); stroke-width: 1.2; stroke-linecap: round; opacity: 0;
+    animation: gust 1.9s linear infinite; }
+  @keyframes gust { 0% { transform: translateX(310px); opacity: 0; } 15%, 80% { opacity: .55; } 100% { transform: translateX(-60px); opacity: 0; } }
+  .wind-scene .ground { stroke: var(--gold-dim); stroke-width: 1.5; stroke-dasharray: 7 9; animation: ground .8s linear infinite; }
+  @keyframes ground { to { stroke-dashoffset: 16; } }
+  .wind-scene .monk { animation: bob .8s ease-in-out infinite; }
+  @keyframes bob { 50% { transform: translateY(-1.5px); } }
+  .wind-scene .robe { fill: #3d3168; stroke: var(--gold); stroke-width: 1; stroke-linejoin: round; }
+  .wind-scene .cape { fill: #2c2350; stroke: var(--gold-dim); stroke-width: .8; transform-origin: -4px -44px; animation: flap .5s ease-in-out infinite; }
+  @keyframes flap { 50% { transform: skewY(-7deg) scaleX(1.12); } }
+  .wind-scene .face { fill: #120e24; }
+  .wind-scene .beard { fill: none; stroke: #cfc6b8; stroke-width: 1.6; stroke-linecap: round; }
+  .wind-scene .arm { fill: none; stroke: #3d3168; stroke-width: 4; stroke-linecap: round; }
+  .wind-scene .foot { fill: #1a1430; }
+  .wind-scene .foot-a { animation: step .8s ease-in-out infinite; }
+  .wind-scene .foot-b { animation: step .8s ease-in-out infinite reverse; }
+  @keyframes step { 0%, 100% { transform: translateX(-3px); } 50% { transform: translateX(3px); } }
+  .wind-scene .staff { transform-origin: 22px -35px; animation: staff .8s ease-in-out infinite; }
+  @keyframes staff { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+  .wind-scene .pole { stroke: #a8865a; stroke-width: 2; stroke-linecap: round; }
+  .wind-scene .cord { stroke: var(--gold-dim); stroke-width: .8; }
+  .wind-scene .lantern { fill: #f3d58a; stroke: var(--gold); stroke-width: .6; }
+  .wind-scene .glow { fill: #f3d58a; opacity: .25; animation: glow 1.6s ease-in-out infinite; }
+  @keyframes glow { 50% { opacity: .5; } }
+  .wind-scene .leaf { transform-origin: 0 0; animation: blow 3s linear infinite; }
+  .wind-scene .leaf path { fill: currentColor; }
+  .wind-scene .leaf .vein { fill: none; stroke: #0004; stroke-width: .6; }
+  .wind-scene .l1 { color: #e7a06a; animation-duration: 2.6s; animation-delay: -.3s; }
+  .wind-scene .l2 { color: var(--gold); animation-duration: 3.2s; animation-delay: -1.8s; animation-name: blow2; }
+  .wind-scene .l3 { color: #c97b5a; animation-duration: 2.8s; animation-delay: -1.1s; }
+  .wind-scene .l4 { color: #b9a35a; animation-duration: 3.5s; animation-delay: -2.6s; animation-name: blow2; }
+  .wind-scene .l5 { color: #e7a06a; animation-duration: 2.4s; animation-delay: -.9s; animation-name: blow2; }
+  .wind-scene .l6 { color: #d6c25e; animation-duration: 3s; animation-delay: -2.1s; }
+  .wind-scene .l7 { color: #c97b5a; animation-duration: 3.4s; animation-delay: -.5s; }
+  @keyframes blow {
+    0% { transform: translate(320px, 0) rotate(0deg); }
+    25% { transform: translate(240px, -10px) rotate(140deg); }
+    50% { transform: translate(160px, 8px) rotate(260deg); }
+    75% { transform: translate(80px, -6px) rotate(400deg); }
+    100% { transform: translate(-30px, 6px) rotate(560deg); }
+  }
+  @keyframes blow2 {
+    0% { transform: translate(320px, 0) rotate(0deg); }
+    30% { transform: translate(220px, 9px) rotate(-150deg); }
+    60% { transform: translate(120px, -9px) rotate(-300deg); }
+    100% { transform: translate(-30px, 4px) rotate(-480deg); }
+  }
   .dots::after { content: ''; animation: dots 1.2s steps(4) infinite; }
   @keyframes dots { 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
   .actions { display: grid; gap: 10px; margin-top: 22px; }
@@ -229,9 +279,6 @@
   <!-- AÇILIM -->
   <section id="read">
     <div id="setup" class="panel">
-      <label class="h" for="q">Sorun</label>
-      <textarea id="q" placeholder="Bilmem gereken ne…"></textarea>
-      <div style="height:18px"></div>
       <label class="h">Açılım türü</label>
       <div class="chips" id="spreadChips"></div>
       <div class="row">
@@ -259,9 +306,48 @@
       <div id="askBox" class="panel ask" hidden>
         <label class="h" for="askQ">✨ Kartlara sor</label>
         <p class="muted note">Her açılımda bir soru hakkın var. Kartlar sorunu birlikte yorumlasın.</p>
-        <textarea id="askQ" maxlength="300" placeholder="Kartlara ne sormak istersin?"></textarea>
-        <p class="err" id="askErr" hidden></p>
-        <button class="btn" id="askBtn">Sor</button>
+        <div id="askForm">
+          <textarea id="askQ" maxlength="300" placeholder="Kartlara ne sormak istersin?"></textarea>
+          <p class="err" id="askErr" hidden></p>
+          <button class="btn" id="askBtn">Sor</button>
+        </div>
+        <div id="askLoading" class="wind-scene" hidden>
+          <svg viewBox="0 0 300 130" role="img" aria-label="Rüzgâra karşı yürüyen bir keşiş">
+            <g class="gusts">
+              <path class="gust" d="M0 22 q18 -5 36 0" style="animation-delay:-.2s"/>
+              <path class="gust" d="M0 58 q24 -6 48 0" style="animation-delay:-1.1s;animation-duration:2.1s"/>
+              <path class="gust" d="M0 88 q16 -4 32 0" style="animation-delay:-.7s;animation-duration:1.7s"/>
+              <path class="gust" d="M0 40 q20 -5 40 0" style="animation-delay:-1.6s;animation-duration:2.3s"/>
+            </g>
+            <line class="ground" x1="0" y1="113" x2="300" y2="113"/>
+            <g transform="translate(140 113) rotate(9) scale(1.3)">
+              <g class="monk">
+                <path class="cape" d="M-4 -44 C-16 -38 -24 -22 -30 -6 L-11 -2 Z"/>
+                <ellipse class="foot foot-a" cx="-2" cy="-1" rx="4" ry="2"/>
+                <ellipse class="foot foot-b" cx="7" cy="-1" rx="4" ry="2"/>
+                <path class="robe" d="M-12 -1 L-5 -46 Q2 -54 9 -46 L14 -1 Z"/>
+                <path class="robe" d="M-6 -44 Q-7 -63 4 -63 Q14 -61 12 -46 Q4 -51 -6 -44 Z"/>
+                <ellipse class="face" cx="8" cy="-52" rx="3" ry="4.5"/>
+                <path class="beard" d="M9 -48 q2 6 -2 11"/>
+                <g class="staff">
+                  <line class="pole" x1="23" y1="-70" x2="27" y2="0"/>
+                  <line class="cord" x1="23" y1="-68" x2="29" y2="-63"/>
+                  <circle class="glow" cx="29.5" cy="-58" r="7"/>
+                  <rect class="lantern" x="27" y="-62" width="5" height="7" rx="1"/>
+                </g>
+                <path class="arm" d="M3 -38 Q12 -31 22 -35"/>
+              </g>
+            </g>
+            <g transform="translate(0 20)"><g class="leaf l1"><path d="M-6 0 Q0 -5 6 0 Q0 5 -6 0Z"/><path class="vein" d="M-6 0 H6"/></g></g>
+            <g transform="translate(0 46)"><g class="leaf l2"><path d="M-6 0 Q0 -5 6 0 Q0 5 -6 0Z"/><path class="vein" d="M-6 0 H6"/></g></g>
+            <g transform="translate(0 72)"><g class="leaf l3"><path d="M-5 0 Q0 -4 5 0 Q0 4 -5 0Z"/><path class="vein" d="M-5 0 H5"/></g></g>
+            <g transform="translate(0 32)"><g class="leaf l4"><path d="M-6 0 Q0 -5 6 0 Q0 5 -6 0Z"/><path class="vein" d="M-6 0 H6"/></g></g>
+            <g transform="translate(0 92)"><g class="leaf l5"><path d="M-5 0 Q0 -4 5 0 Q0 4 -5 0Z"/><path class="vein" d="M-5 0 H5"/></g></g>
+            <g transform="translate(0 58)"><g class="leaf l6"><path d="M-6 0 Q0 -5 6 0 Q0 5 -6 0Z"/><path class="vein" d="M-6 0 H6"/></g></g>
+            <g transform="translate(0 12)"><g class="leaf l7"><path d="M-5 0 Q0 -4 5 0 Q0 4 -5 0Z"/><path class="vein" d="M-5 0 H5"/></g></g>
+          </svg>
+          <p class="center muted loading-text"><span class="dots">Sorunun cevabı aranıyor</span></p>
+        </div>
       </div>
       <div class="actions">
         <button class="btn ghost" id="revealAll">Hepsini aç</button>
@@ -508,7 +594,7 @@ $('#drawBtn').addEventListener('click', () => {
   const allowRev = $('#reversals').checked;
   const drawn = shuffle([...DECK]).slice(0, spread.positions.length)
     .map(c => ({ id: c.id, rev: allowRev && randInt(2) === 1, flipped: false }));
-  reading = { question: $('#q').value.trim(), spreadId, allowRev, cards: drawn, date: Date.now(), saved: false };
+  reading = { question: '', spreadId, allowRev, cards: drawn, date: Date.now(), saved: false };
 
   // Karıştırma sırasında görselleri önceden yükle
   drawn.forEach(d => { new Image().src = imgUrl(BY_ID[d.id], 480); });
@@ -555,7 +641,7 @@ $('#revealAll').addEventListener('click', () => {
 });
 
 $('#newReading').addEventListener('click', () => {
-  $('#readingView').hidden = true; $('#setup').hidden = false; $('#q').value = ''; reading = null;
+  $('#readingView').hidden = true; $('#setup').hidden = false; reading = null;
   $('#askAnswer').innerHTML = ''; $('#askBox').hidden = true; $('#askErr').hidden = true;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
@@ -581,7 +667,7 @@ function renderReadout() {
   $('#readout').innerHTML = html;
   if (done && !reading.ask && $('#askBox').hidden) {
     $('#askBox').hidden = false;
-    $('#askQ').value = reading.question;
+    $('#askQ').value = '';
   }
 
   if (done && !reading.saved) {
@@ -630,8 +716,9 @@ $('#askBtn').addEventListener('click', async () => {
   };
 
   const btn = $('#askBtn'), current = reading;
-  btn.disabled = true; $('#askQ').disabled = true; $('#askErr').hidden = true;
-  btn.innerHTML = '<span class="dots">Kartlar düşünüyor</span>';
+  btn.disabled = true; $('#askErr').hidden = true;
+  $('#askForm').hidden = true; $('#askLoading').hidden = false;
+  $('#askBox').scrollIntoView({ behavior: 'smooth', block: 'center' });
   try {
     const res = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     const data = await res.json().catch(() => ({}));
@@ -648,7 +735,8 @@ $('#askBtn').addEventListener('click', async () => {
     $('#askErr').textContent = err.message === 'Failed to fetch' ? 'İnternet bağlantısını kontrol et.' : err.message;
     $('#askErr').hidden = false;
   } finally {
-    btn.disabled = false; $('#askQ').disabled = false; btn.textContent = 'Sor';
+    btn.disabled = false;
+    $('#askLoading').hidden = true; $('#askForm').hidden = false;
   }
 });
 
@@ -685,7 +773,7 @@ function renderJournal() {
     const date = new Date(r.date).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' });
     return `<details class="entry"><summary>
         <div class="date">${esc(date.toLocaleUpperCase('tr-TR'))} · ${esc(spread.name.toLocaleUpperCase('tr-TR'))}</div>
-        <div class="q">${r.question ? `“${esc(r.question)}”` : '<span class="muted">Soru yok</span>'}</div>
+        ${(r.question || r.ask?.q) ? `<div class="q">“${esc(r.question || r.ask.q)}”</div>` : ''}
         <div class="muted" style="font-size:16px">${r.cards.map(d => esc(BY_ID[d.id].name) + (d.rev ? ' ↺' : '')).join(' · ')}</div>
       </summary>
       <ul>${r.cards.map((d, i) => { const c = BY_ID[d.id]; return `<li><b>${esc(spread.positions[i][0])}:</b> ${esc(c.name)}${revTag(d.rev)} — <span class="kw">${esc(d.rev ? c.rev : c.up)}</span></li>`; }).join('')}</ul>
