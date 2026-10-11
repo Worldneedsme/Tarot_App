@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tarot">
+<meta name="theme-color" content="#0f0b1e">
+<title>Tarot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://upload.wikimedia.org">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0b1e;
+    --panel: #1d1735;
+    --panel-2: #261e45;
+    --line: #3a3060;
+    --gold: #d8b46a;
+    --gold-dim: #9c8150;
+    --text: #efe7d6;
+    --muted: #a79fbd;
+    --rev: #e59a9a;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 19px;
+    line-height: 1.45;
+    min-height: 100dvh;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+  }
+  /* Fixed sky (background-attachment: fixed is unreliable on iOS) */
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(1px 1px at 12% 18%, #fff8 50%, transparent 51%),
+      radial-gradient(1px 1px at 72% 12%, #fff6 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 40% 30%, #fff5 50%, transparent 51%),
+      radial-gradient(1px 1px at 88% 44%, #fff7 50%, transparent 51%),
+      radial-gradient(1px 1px at 22% 66%, #fff5 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 60% 80%, #fff4 50%, transparent 51%),
+      radial-gradient(1px 1px at 92% 90%, #fff6 50%, transparent 51%),
+      radial-gradient(ellipse at 50% -10%, #3b2a6b 0%, transparent 60%),
+      var(--bg);
+  }
+  .app {
+    max-width: 760px; margin: 0 auto;
+    padding: calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 32px);
+  }
+  h1, h2, h3, .cinzel { font-family: 'Cinzel', Georgia, serif; font-weight: 500; letter-spacing: .04em; }
+  h1 { text-align: center; color: var(--gold); font-size: 30px; margin: 4px 0 2px; }
+  .subtitle { text-align: center; color: var(--muted); font-style: italic; margin: 0 0 18px; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 4px; margin: 0 auto 22px; max-width: 360px; }
+  .tabs button { flex: 1; border: 0; background: none; color: var(--muted); font: 600 13px 'Cinzel', serif; letter-spacing: .06em; padding: 10px 0; border-radius: 999px; cursor: pointer; }
+  .tabs button[aria-selected="true"] { background: var(--gold); color: #1a1430; }
+
+  /* Form */
+  .panel { background: color-mix(in srgb, var(--panel) 88%, transparent); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+  label.h { display: block; font: 600 12px 'Cinzel', serif; letter-spacing: .1em; color: var(--gold); text-transform: uppercase; margin: 0 0 8px; }
+  textarea {
+    width: 100%; resize: none; border-radius: 10px; border: 1px solid var(--line); background: #120e24; color: var(--text);
+    font: italic 19px 'Cormorant Garamond', Georgia, serif; padding: 12px; min-height: 76px; outline: none;
+  }
+  textarea:focus { border-color: var(--gold-dim); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .chip { border: 1px solid var(--line); background: #120e24; color: var(--text); border-radius: 999px; padding: 9px 14px; font: 17px 'Cormorant Garamond', serif; cursor: pointer; }
+  .chip[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); background: #2a2140; }
+  .chip small { color: var(--muted); }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 18px; }
+  .switch { position: relative; width: 50px; height: 30px; flex: none; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch span { position: absolute; inset: 0; background: #120e24; border: 1px solid var(--line); border-radius: 999px; transition: .2s; }
+  .switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--muted); transition: .2s; }
+  .switch input:checked + span { border-color: var(--gold); }
+  .switch input:checked + span::after { transform: translateX(20px); background: var(--gold); }
+  .btn {
+    display: block; width: 100%; border: 0; border-radius: 12px; padding: 15px; cursor: pointer;
+    background: linear-gradient(180deg, #e6c47c, #c29c55); color: #1a1430; font: 700 15px 'Cinzel', serif; letter-spacing: .1em;
+  }
+  .btn.ghost { background: none; border: 1px solid var(--line); color: var(--gold); }
+  .btn:active { transform: scale(.98); }
+  .muted { color: var(--muted); }
+  .center { text-align: center; }
+
+  /* Card back artwork */
+  .backart { width: 100%; height: 100%; display: block; }
+  .card-back {
+    background: radial-gradient(circle at 50% 50%, #3a2a6e 0%, #1c1438 70%);
+    border-radius: 7cqw; overflow: hidden;
+    box-shadow: 0 6px 18px #0008;
+  }
+
+  /* Deck shuffle */
+  .deck-stack { position: relative; width: 120px; aspect-ratio: 7/12; margin: 30px auto; container-type: inline-size; }
+  .deck-stack .card-back { position: absolute; inset: 0; }
+  .deck-stack.shuffling .card-back:nth-child(1) { animation: shufA .45s ease-in-out infinite; }
+  .deck-stack.shuffling .card-back:nth-child(2) { animation: shufB .45s ease-in-out infinite; }
+  @keyframes shufA { 50% { transform: translateX(-50px) rotate(-8deg); } }
+  @keyframes shufB { 50% { transform: translateX(50px) rotate(8deg); } }
+
+  /* Cards */
+  .question { text-align: center; font-style: italic; color: var(--muted); margin: 0 0 6px; }
+  .spread-title { text-align: center; color: var(--gold); margin: 0 0 4px; font-size: 18px; }
+  .hint { text-align: center; color: var(--muted); font-size: 16px; margin: 0 0 18px; }
+  .spread { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px 12px; --w: 104px; }
+  .spread.n1 { --w: min(60vw, 230px); }
+  .spread.n3 { --w: min(29vw, 160px); }
+  .spread.n5 { --w: min(29vw, 136px); }
+  .spread.n10 { --w: min(29vw, 124px); }
+  .slot { width: var(--w); display: flex; flex-direction: column; align-items: center; gap: 4px; animation: deal .5s backwards; }
+  @keyframes deal { from { opacity: 0; transform: translateY(-30px) scale(.9); } }
+  .pos { font: 600 11px 'Cinzel', serif; letter-spacing: .08em; color: var(--gold); text-align: center; text-transform: uppercase; margin-top: 4px; }
+  .pos .num { color: var(--muted); }
+  .cname { font-size: 14px; font-style: italic; color: var(--text); text-align: center; line-height: 1.15; min-height: 1em; }
+  .cname .tag-rev { font-size: 13px; }
+
+  .card { width: var(--w); aspect-ratio: 7/12; perspective: 900px; cursor: pointer; container-type: inline-size; border: 0; padding: 0; background: none; display: block; }
+  .inner { position: relative; width: 100%; height: 100%; transition: transform .75s cubic-bezier(.3,.7,.3,1); transform-style: preserve-3d; }
+  .card.flipped .inner { transform: rotateY(180deg); }
+  .face { position: absolute; inset: 0; border-radius: 7cqw; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; box-shadow: 0 6px 18px #0008; }
+  .front {
+    transform: rotateY(180deg);
+    background: linear-gradient(170deg, #2e2550, #191330);
+    border: 1px solid var(--gold-dim);
+    color: var(--c, var(--gold));
+  }
+  .card.rev .front { transform: rotateY(180deg) rotate(180deg); }
+  .front img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .front::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    box-shadow: inset 0 0 0 1.5cqw #0004; background: linear-gradient(125deg, #fff2 0%, transparent 35%); }
+  .fallback {
+    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    padding: 9cqw 6cqw 8cqw; text-align: center;
+    box-shadow: inset 0 0 0 3.5cqw #191330, inset 0 0 0 4.3cqw var(--gold-dim);
+  }
+  .fallback .top { font: 700 11cqw 'Cinzel', serif; }
+  .fallback .art { font-size: 38cqw; line-height: 1; }
+  .fallback .art svg { width: 52cqw; height: 52cqw; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+  .fallback .name { font: 600 9.5cqw 'Cinzel', serif; color: var(--text); line-height: 1.15; }
+
+  .readout { margin-top: 26px; display: grid; gap: 12px; }
+  .reading-item { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; cursor: pointer; }
+  .reading-item h3 { margin: 0 0 2px; font-size: 15px; color: var(--gold); }
+  .reading-item .card-name { font-weight: 600; }
+  .tag-rev { color: var(--rev); font-style: italic; }
+  .kw { color: var(--muted); font-style: italic; }
+  .summary { border-color: var(--gold-dim); cursor: default; }
+  .summary p { margin: 6px 0; }
+  .summary h4 { font: 600 11px 'Cinzel', serif; letter-spacing: .1em; color: var(--gold); text-transform: uppercase; margin: 16px 0 2px; opacity: .85; }
+  .summary h3 + h4 { margin-top: 8px; }
+  .entry .summary { margin: 10px 0; background: #160f2c; }
+  .ask { margin-top: 12px; }
+  .ask .note { font-size: 16px; margin: -2px 0 10px; }
+  .ask textarea { min-height: 64px; margin-bottom: 12px; }
+  .ask .err { color: var(--rev); font-size: 16px; margin: 0 0 10px; }
+  .btn:disabled { opacity: .6; cursor: default; }
+  .answer .q { font-style: italic; color: var(--muted); margin: 2px 0 8px; }
+  .answer p { margin: 8px 0; }
+  .dots::after { content: ''; animation: dots 1.2s steps(4) infinite; }
+  @keyframes dots { 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+  .actions { display: grid; gap: 10px; margin-top: 22px; }
+
+  /* Bottom sheet */
+  .backdrop { position: fixed; inset: 0; background: #0009; opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 10; }
+  .sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 11; max-height: 88dvh; overflow-y: auto;
+    background: var(--panel-2); border-top: 1px solid var(--gold-dim); border-radius: 20px 20px 0 0;
+    padding: 10px 20px calc(env(safe-area-inset-bottom) + 24px); transform: translateY(105%); transition: transform .3s cubic-bezier(.3,.7,.3,1);
+    max-width: 760px; margin: 0 auto;
+  }
+  .sheet.open { transform: none; }
+  .backdrop.open { opacity: 1; pointer-events: auto; }
+  .grab { width: 40px; height: 4px; border-radius: 4px; background: var(--line); margin: 0 auto 14px; }
+  .sheet-head { display: flex; gap: 16px; align-items: center; margin-bottom: 10px; }
+  .sheet-head .card { --w: 128px; flex: none; cursor: default; }
+  .sheet h2 { margin: 0; color: var(--gold); font-size: 21px; }
+  .sheet .meta { color: var(--muted); font-size: 16px; }
+  .sheet h4 { font: 600 12px 'Cinzel', serif; letter-spacing: .1em; color: var(--gold); text-transform: uppercase; margin: 16px 0 4px; }
+  .sheet p { margin: 0; }
+  .sheet .dim { opacity: .55; }
+
+  /* Journal & deck */
+  .journal { display: grid; gap: 12px; }
+  .entry { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
+  .entry summary { cursor: pointer; list-style: none; }
+  .entry summary::-webkit-details-marker { display: none; }
+  .entry .date { font: 600 11px 'Cinzel', serif; color: var(--gold); letter-spacing: .08em; }
+  .entry .q { font-style: italic; margin: 2px 0; }
+  .entry ul { padding-left: 18px; margin: 10px 0; }
+  .entry .del { background: none; border: 0; color: var(--rev); font: 15px 'Cormorant Garamond', serif; cursor: pointer; padding: 0; }
+  .deck-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 14px 10px; }
+  .deck-grid .tile { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+  .deck-grid .card { --w: 100%; }
+  .deck-section h3 { color: var(--gold); font-size: 15px; margin: 22px 0 10px; }
+
+  .toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 20px); transform: translate(-50%, 80px); background: var(--gold); color: #1a1430; font: 600 13px 'Cinzel', serif; padding: 10px 16px; border-radius: 999px; transition: transform .3s; z-index: 20; white-space: nowrap; }
+  .toast.show { transform: translate(-50%, 0); }
+  .foot { text-align: center; color: var(--muted); font-size: 14px; font-style: italic; margin-top: 36px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>✦ Tarot ✦</h1>
+  <p class="subtitle">Sor, karıştır ve kartları dinle</p>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="read" aria-selected="true">Açılım</button>
+    <button role="tab" data-tab="journal" aria-selected="false">Günlük</button>
+    <button role="tab" data-tab="deck" aria-selected="false">Deste</button>
+  </nav>
+
+  <!-- AÇILIM -->
+  <section id="read">
+    <div id="setup" class="panel">
+      <label class="h" for="q">Sorun</label>
+      <textarea id="q" placeholder="Bilmem gereken ne…"></textarea>
+      <div style="height:18px"></div>
+      <label class="h">Açılım türü</label>
+      <div class="chips" id="spreadChips"></div>
+      <div class="row">
+        <div>
+          <div class="cinzel" style="font-size:13px;color:var(--gold);letter-spacing:.08em">TERS KARTLAR</div>
+          <div class="muted" style="font-size:16px">Kartlar baş aşağı gelebilir</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="reversals" checked><span></span></label>
+      </div>
+      <button class="btn" id="drawBtn">Karıştır &amp; Çek</button>
+    </div>
+
+    <div id="shuffleView" hidden>
+      <div class="deck-stack shuffling" id="deckStack"></div>
+      <p class="center muted">Kartlar karıştırılıyor…</p>
+    </div>
+
+    <div id="readingView" hidden>
+      <p class="question" id="rQuestion"></p>
+      <h2 class="spread-title" id="rSpread"></h2>
+      <p class="hint" id="rHint"></p>
+      <div class="spread" id="spread"></div>
+      <div class="readout" id="readout"></div>
+      <div id="askAnswer"></div>
+      <div id="askBox" class="panel ask" hidden>
+        <label class="h" for="askQ">✨ Kartlara sor</label>
+        <p class="muted note">Her açılımda bir soru hakkın var. Kartlar sorunu birlikte yorumlasın.</p>
+        <textarea id="askQ" maxlength="300" placeholder="Kartlara ne sormak istersin?"></textarea>
+        <p class="err" id="askErr" hidden></p>
+        <button class="btn" id="askBtn">Sor</button>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="revealAll">Hepsini aç</button>
+        <button class="btn" id="newReading" hidden>Yeni açılım</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- GÜNLÜK -->
+  <section id="journal" hidden>
+    <div class="journal" id="journalList"></div>
+  </section>
+
+  <!-- DESTE -->
+  <section id="deck" hidden></section>
+
+  <p class="foot">Eğlence ve iç gözlem için. Geleceğin senin ellerinde.</p>
+</div>
+
+<div class="backdrop" id="backdrop"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+<div class="toast" id="toast"></div>
+
+<script src="interpret.js"></script>
+<script>
+/* ---------- Veri ---------- */
+const ROMAN = ['0','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX','XXI'];
+
+// Rider–Waite–Smith (1909, kamu malı) görselleri — Wikimedia Commons
+const MAJOR_FILES = ['00_Fool','01_Magician','02_High_Priestess','03_Empress','04_Emperor','05_Hierophant','06_Lovers','07_Chariot',
+  '08_Strength','09_Hermit','10_Wheel_of_Fortune','11_Justice','12_Hanged_Man','13_Death','14_Temperance','15_Devil','16_Tower',
+  '17_Star','18_Moon','19_Sun','20_Judgement','21_World'].map(f => `RWS_Tarot_${f}.jpg`);
+const SUIT_FILE = { wands: 'Wands', cups: 'Cups', swords: 'Swords', pentacles: 'Pents' };
+const imgUrl = (c, w) => `https://commons.wikimedia.org/wiki/Special:FilePath/${c.file}?width=${w}`;
+
+// [isim, yedek sembol, düz, ters, anlam]
+const MAJORS = [
+  ['Deli','🌼','yeni başlangıçlar, masumiyet, kendiliğindenlik, cesur bir adım','pervasızlık, tereddüt, bilinmeyenden korkmak','Yepyeni bir başlangıç. Yolun tamamını göremesen de yolculuğa güven.'],
+  ['Büyücü','✨','irade, yetenek, gerçekleştirme, beceriklilik','manipülasyon, kullanılmayan yetenek, dağınık enerji','İhtiyacın olan her şeye zaten sahipsin. Niyetine odaklan ve harekete geç.'],
+  ['Başrahibe','🌙','sezgi, gizem, iç ses','sırlar, sezgiyi görmezden gelmek, kafa karışıklığı','Cevap içinde. Sessizleş ve zaten bildiğin şeyi dinle.'],
+  ['İmparatoriçe','🌾','bolluk, şefkat, yaratıcılık, güzellik','bağımlılık, yaratıcı tıkanıklık, kendini ihmal etmek','Özenle gelen büyüme. Kendini, sevdiklerini ve fikirlerini besle.'],
+  ['İmparator','👑','düzen, otorite, istikrar, koruma','katılık, kontrolcülük, inatçılık','Sağlam temeller kur. Disiplin ve net sınırlarla yol göster.'],
+  ['Aziz','🗝️','gelenek, rehberlik, ortak inançlar, öğrenmek','başkaldırı, alışılmadık yollar, kuralları sorgulamak','Bir rehberden ya da gelenekten bilgelik al — ya da hangi kuralların artık sana uymadığına karar ver.'],
+  ['Aşıklar','💞','aşk, uyum, birliktelik, anlamlı seçimler','dengesizlik, uyumsuzluk, iç çatışma','Derin bir bağ ya da gerçek değerlerini ortaya koyan bir seçim.'],
+  ['Savaş Arabası','🏇','kararlılık, irade, zafer, ilerleme','yön kaybı, saldırganlık, sıkışmışlık','Dümeni kendinden emin tut. Başarı odak ve öz denetimle gelir.'],
+  ['Güç','🦁','cesaret, şefkat, sabır, sessiz güç','kendinden şüphe, güvensizlik, öfkeye yenilmek','Yumuşak güç kazanır. Zorluklara şefkatli bir kalp ve sağlam bir iradeyle karşılık ver.'],
+  ['Ermiş','🏮','içe dönüş, yalnızlık, iç bilgelik','kopukluk, yalnızlık hissi, fazla geri çekilmek','Kendi ışığını bulmak için bir adım geri çekil. Cevaplar sessiz anlarda gelir.'],
+  ['Kader Çarkı','☸️','döngüler, kader, dönüm noktaları, şans','şanssızlık, değişime direnmek, kontrolü kaybetmek','Hayat dönüyor. İnen çıkar — değişimle birlikte ak.'],
+  ['Adalet','⚖️','adalet, hakikat, sebep-sonuç, sorumluluk','haksızlık, dürüst olmamak, sorumluluktan kaçmak','Doğru olan ortaya çıkacak. Dürüstlük ve dengeyle hareket et.'],
+  ['Asılan Adam','🙃','duraklama, teslimiyet, yeni bir bakış açısı','oyalanma, direnç, gereksiz fedakârlık','Kontrolü bir anlığına bırak. Olaylara farklı bakmak her şeyi değiştirir.'],
+  ['Ölüm','🦋','sonlar, dönüşüm, geçiş, yenilenme','değişim korkusu, durgunluk, bırakamamak','Gerçek bir ölüm değil — yeni bir sayfa açılsın diye bir bölüm kapanıyor.'],
+  ['Denge','🏺','denge, ölçülülük, sabır, iyileşme','aşırılık, dengesizlik, sabırsızlık','Zıtlıkları özenle harmanla. Orta yol huzur getirir.'],
+  ['Şeytan','⛓️','bağımlılık, ayartılma, gölge benlik','özgürleşme, zincirleri kırmak, gücünü geri almak','Seni neyin bağladığını fark et. Zincirler göründüğünden daha gevşek.'],
+  ['Kule','⚡','ani değişim, sarsıntı, aydınlanma','felaketten kaçınmak, değişim korkusu, ertelenmiş çöküş','Çürük temel üzerine kurulan yıkılır ve hakikate yer açılır.'],
+  ['Yıldız','⭐','umut, yenilenme, ilham, huzur','umutsuzluk, kopukluk, inancını kaybetmek','Fırtınadan sonra iyileşme gelir. İnanmaya devam et — yolun aydınlık.'],
+  ['Ay','🌕','yanılsama, sezgi, rüyalar, bilinmeyen','netliğin geri dönmesi, korkuları bırakmak','Her şey göründüğü gibi değil. Sisin içinde sezgine güven.'],
+  ['Güneş','☀️','neşe, başarı, canlılık, sıcaklık','geçici hüzün, aşırı özgüven, sönükleşen ışık','Saf pozitiflik. Her şey parlak, net ve senden yana.'],
+  ['Mahkeme','📯','uyanış, hesaplaşma, içsel çağrı','kendinden şüphe, çağrıyı duymazdan gelmek, kendini sert yargılamak','Bir hakikat anı. Olmakta olduğun kişiye doğru yüksel.'],
+  ['Dünya','🌍','tamamlanma, tatmin, bütünlük, seyahat','yarım kalmışlık, kapanış arayışı, açık uçlar','Bir döngü tamamlanıyor. Ne kadar yol aldığını kutla.'],
+];
+
+const SUITS = {
+  wands:     { name: 'Asalar',    one: 'Asa',    element: 'Ateş',   color: '#e7a06a', theme: 'tutku, hırs ve yaratıcı enerji' },
+  cups:      { name: 'Kupalar',   one: 'Kupa',   element: 'Su',     color: '#86b6e6', theme: 'duygular, aşk ve ilişkiler' },
+  swords:    { name: 'Kılıçlar',  one: 'Kılıç',  element: 'Hava',   color: '#c4cee0', theme: 'düşünceler, iletişim ve çatışmalar' },
+  pentacles: { name: 'Tılsımlar', one: 'Tılsım', element: 'Toprak', color: '#d6c25e', theme: 'iş, para ve maddi dünya' },
+};
+const RANKS = ['Ası','İkilisi','Üçlüsü','Dörtlüsü','Beşlisi','Altılısı','Yedilisi','Sekizlisi','Dokuzlusu','Onlusu','Uşağı','Şövalyesi','Kraliçesi','Kralı'];
+const RANK_SHORT = ['A','2','3','4','5','6','7','8','9','10','U','Ş','K','K'];
+
+// [düz, ters] — As'tan Kral'a
+const MINORS = {
+  wands: [
+    ['ilham, yeni bir girişim, yaratıcı kıvılcım','gecikmeler, motivasyon eksikliği'],
+    ['planlama, geleceği görmek, kararlar','değişim korkusu, garantici olmak'],
+    ['genişleme, öngörü, ilerleme','engeller, gecikmeler, hayal kırıklığı'],
+    ['kutlama, yuva, uyum','geçiş dönemi, destek eksikliği'],
+    ['rekabet, çatışma, gerginlik','çatışmadan kaçmak, uzlaşma'],
+    ['zafer, takdir, başarı','kibir, gözden düşmek'],
+    ['azim, yerini korumak','bunalmışlık, pes etmek'],
+    ['hız, hareket, gelen haberler','gecikmeler, beklemek, sabırsızlık'],
+    ['dayanıklılık, sebat, son bir gayret','tükenmişlik, savunmacılık'],
+    ['yük, sorumluluk, yoğun emek','yükleri bırakmak, iş paylaşmak'],
+    ['merak, heyecan, yeni fikirler','yönsüzlük, sabırsızlık'],
+    ['enerji, macera, tutku','acelecilik, pervasızlık'],
+    ['özgüven, sıcaklık, kararlılık','kıskançlık, güvensizlik'],
+    ['liderlik, vizyon, cesaret','dürtüsellik, baskıcılık'],
+  ],
+  cups: [
+    ['yeni bir aşk, şefkat, duygusal bir başlangıç','bastırılmış duygular, boşluk hissi'],
+    ['ortaklık, çekim, birlik','dengesizlik, kopan bir bağ'],
+    ['arkadaşlık, kutlama, topluluk','aşırılık, dedikodu'],
+    ['ilgisizlik, düşünceye dalmak, kaçırılan fırsatlar','yeni farkındalık, kabullenme'],
+    ['yas, pişmanlık, kayba odaklanmak','kabullenme, yoluna devam etmek'],
+    ['nostalji, çocukluk, tatlı anılar','geçmişte yaşamak'],
+    ['seçenekler, hayaller, düşler','netlik, odak, verilen kararlar'],
+    ['uzaklaşmak, daha derin bir anlam aramak','değişim korkusu, savrulmak'],
+    ['memnuniyet, gerçekleşen dilekler','tatminsizlik, açgözlülük'],
+    ['uyum, aile, kalıcı mutluluk','kopukluk, uyuşmayan değerler'],
+    ['yaratıcı bir fırsat, sezgi, tatlı bir mesaj','duygusal olgunlaşmamışlık'],
+    ['romantizm, çekicilik, kalbinin sesini dinlemek','dalgalı ruh hali, gerçekçi olmayan beklentiler'],
+    ['şefkat, sezgi, duygusal özen','güvensizlik, bağımlı ilişki'],
+    ['duygusal denge, sakinlik, diplomasi','dalgalı ruh hali, manipülasyon'],
+  ],
+  swords: [
+    ['netlik, atılım, hakikat','kafa karışıklığı, kaos'],
+    ['kararsızlık, çıkmaz, zor bir seçim','bilgi yükü, sonunda seçim yapmak'],
+    ['kalp kırıklığı, keder, acı bir gerçek','iyileşme, affetmek'],
+    ['dinlenme, toparlanma, tefekkür','tükenmişlik, huzursuzluk'],
+    ['çatışma, gerginlik, ne pahasına olursa olsun kazanmak','barışma, pişmanlık'],
+    ['geçiş, sıkıntıları geride bırakmak','değişime direnç, yarım kalmış işler'],
+    ['strateji, gizlilik, kurnazlık','itiraf etmek, vicdan azabı'],
+    ['kapana kısılmışlık, kendi koyduğun sınırlar','kendini kabul, özgürlük'],
+    ['kaygı, endişe, uykusuz geceler','umut, yardım istemek'],
+    ['acı bir son, dibe vurmak','toparlanma, yeniden doğuş'],
+    ['merak, yeni fikirler, dikkat','boş laf, aceleyle söylenen sözler'],
+    ['hırs, hızlı hareket, azim','dürtüsellik, yönsüzlük'],
+    ['bağımsızlık, net sınırlar, dürüstlük','soğukluk, kırgınlık'],
+    ['zekâ, otorite, hakikat','manipülasyon, sertlik'],
+  ],
+  pentacles: [
+    ['fırsat, refah, yeni bir girişim','kaçan fırsat, kötü planlama'],
+    ['denge, uyum sağlamak, öncelikleri idare etmek','bunalmışlık, dağınıklık'],
+    ['ekip çalışması, ustalık, iş birliği','uyumsuz ekip, vasatlık'],
+    ['güvence, birikim, kontrol','cimrilik, bırakmayı öğrenmek'],
+    ['zorluk, endişe, dışlanmışlık hissi','toparlanma, gelen yardım'],
+    ['cömertlik, vermek ve almak','karşılık beklemek, dengesizlik'],
+    ['sabır, uzun vadeli bakış, yatırım','sabırsızlık, az getiri'],
+    ['çalışkanlık, zanaat, ustalaşmak','mükemmeliyetçilik, odak eksikliği'],
+    ['bolluk, bağımsızlık, kendine yetmek','aşırı çalışmak, bağımlılık'],
+    ['miras, aile, kalıcı zenginlik','istikrarsızlık, aile anlaşmazlıkları'],
+    ['hırs, öğrenmek, hedefleri gerçekleştirmek','erteleme'],
+    ['sıkı çalışma, rutin, güvenilirlik','sıkılmak, durgunluk'],
+    ['şefkat, pratiklik, konfor','kendini ihmal, dengesizlik'],
+    ['zenginlik, güvence, disiplin','inatçılık, açgözlülük'],
+  ],
+};
+
+const SUIT_SVG = {
+  wands: '<svg viewBox="0 0 24 24"><path d="M6 21 17 4"/><path d="M17 4c1.5-.6 2.6.2 2.5 1.6"/><path d="M13.2 9.8c1.6-.7 3 .1 3.1 1.5"/><path d="M9.7 15c-1.7.2-2.6-.9-2.1-2.3"/><circle cx="17.6" cy="3.6" r=".6"/></svg>',
+  cups: '<svg viewBox="0 0 24 24"><path d="M6 4h12v3.5a6 6 0 0 1-12 0Z"/><path d="M12 13.5V18"/><path d="M8 20.5h8"/><path d="M9 18h6"/></svg>',
+  swords: '<svg viewBox="0 0 24 24"><path d="M12 2.5 14 5.5V15h-4V5.5Z"/><path d="M6.5 15h11"/><path d="M12 15v5"/><circle cx="12" cy="21" r="1"/></svg>',
+  pentacles: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 5 16.11 17.66 5.34 9.84h13.32L7.89 17.66Z"/></svg>',
+};
+
+// Kart arkası: güneş, hilal ve yıldızlar
+const BACK_SVG = (() => {
+  const g = '#d8b46a';
+  let rays = '';
+  for (let i = 0; i < 24; i++) {
+    const a = i * Math.PI / 12, r1 = 12.5, r2 = i % 2 ? 16 : 19;
+    rays += `<line x1="${(Math.cos(a) * r1).toFixed(2)}" y1="${(Math.sin(a) * r1).toFixed(2)}" x2="${(Math.cos(a) * r2).toFixed(2)}" y2="${(Math.sin(a) * r2).toFixed(2)}"/>`;
+  }
+  const star = (x, y, s) => `<path transform="translate(${x} ${y}) scale(${s})" d="M0-4 1-1 4 0 1 1 0 4-1 1-4 0-1-1Z" fill="${g}"/>`;
+  const moon = (y, flip) => `<path transform="translate(35 ${y}) ${flip ? 'rotate(180)' : ''}" d="M0-6A6 6 0 1 0 0 6A7.5 7.5 0 0 1 0-6Z" fill="${g}"/>`;
+  return `<svg class="backart" viewBox="0 0 70 120" aria-hidden="true">
+    <rect x="3.5" y="3.5" width="63" height="113" rx="5" fill="none" stroke="${g}" stroke-width=".9"/>
+    <rect x="6.5" y="6.5" width="57" height="107" rx="3.5" fill="none" stroke="${g}" stroke-width=".4" stroke-dasharray="1 1.4"/>
+    <g transform="translate(35 60)" stroke="${g}" stroke-width=".6" fill="none">
+      <circle r="21.5" stroke-width=".35"/>${rays}<circle r="11" stroke-width=".8"/>
+      <circle r="7.5" fill="${g}" fill-opacity=".18" stroke-width=".5"/>
+    </g>
+    ${star(35, 60, .9)}
+    ${moon(24, false)}${moon(96, true)}
+    ${star(13, 14, .7)}${star(57, 14, .7)}${star(13, 106, .7)}${star(57, 106, .7)}
+    ${star(16, 40, .4)}${star(54, 40, .4)}${star(16, 80, .4)}${star(54, 80, .4)}
+  </svg>`;
+})();
+
+const DECK = [];
+MAJORS.forEach(([name, symbol, up, rev, meaning], i) =>
+  DECK.push({ id: 'm' + i, name, arcana: 'major', n: i, top: ROMAN[i], symbol, up, rev, meaning, file: MAJOR_FILES[i] }));
+Object.keys(SUITS).forEach(suit => MINORS[suit].forEach(([up, rev], i) =>
+  DECK.push({ id: suit + i, name: `${SUITS[suit].one} ${RANKS[i]}`, arcana: 'minor', suit, rank: i + 1, top: RANK_SHORT[i], up, rev,
+    court: i >= 10, file: `${SUIT_FILE[suit]}${String(i + 1).padStart(2, '0')}.jpg` })));
+const BY_ID = Object.fromEntries(DECK.map(c => [c.id, c]));
+
+const SPREADS = [
+  { id: 'one', name: 'Günün Kartı', short: '1 kart', positions: [
+    ['Kartın', 'Bugün yanında taşıyacağın enerji'] ] },
+  { id: 'three', name: 'Geçmiş · Şimdi · Gelecek', short: '3 kart', positions: [
+    ['Geçmiş', 'Seni buraya getiren'], ['Şimdi', 'Şu an bulunduğun yer'], ['Gelecek', 'Olayların gittiği yön'] ] },
+  { id: 'love', name: 'Aşk', short: '5 kart', retired: true, positions: [
+    ['Sen', 'Nasıl hissediyor ve davranıyorsun'], ['O', 'O nasıl hissediyor ve davranıyor'], ['Bağınız', 'Aranızdaki bağ'],
+    ['Zorluk', 'Özen ve ilgi isteyen konu'], ['Sonuç', 'İlişkinin gittiği yön'] ] },
+  { id: 'celtic', name: 'Kelt Haçı', short: '10 kart', retired: true, positions: [
+    ['Şimdi', 'Meselenin özü'], ['Engel', 'Önüne çıkan'], ['Temel', 'Her şeyin altındaki kök'],
+    ['Yakın geçmiş', 'Geride kalmakta olan'], ['Potansiyel', 'Ulaşılabilecek en iyi sonuç'], ['Yakın gelecek', 'Yakında gelecek olan'],
+    ['Sen', 'Tavrın ve rolün'], ['Çevre', 'Diğer insanlar ve çevren'], ['Umutlar & korkular', 'Arzuladığın ya da korktuğun'],
+    ['Sonuç', 'Olayların gittiği yön'] ] },
+];
+
+/* ---------- Yardımcılar ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+function randInt(n) { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; }
+function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = randInt(i + 1); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+const store = {
+  get() { try { return JSON.parse(localStorage.getItem('tarot.journal') || '[]'); } catch { return []; } },
+  set(v) { try { localStorage.setItem('tarot.journal', JSON.stringify(v)); return true; } catch { return false; } },
+};
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2000); }
+const revTag = rev => rev ? ' <span class="tag-rev">ters</span>' : '';
+
+function cardHTML(c, { rev = false, flipped = true, attrs = '', w = 480, lazy = false } = {}) {
+  const color = c.suit ? SUITS[c.suit].color : 'var(--gold)';
+  const art = c.arcana === 'major' ? c.symbol : SUIT_SVG[c.suit];
+  return `<button class="card${flipped ? ' flipped' : ''}${rev ? ' rev' : ''}" ${attrs} aria-label="${esc(c.name)}${rev ? ', ters' : ''}">
+    <div class="inner">
+      <div class="face card-back">${BACK_SVG}</div>
+      <div class="face front" style="--c:${color}">
+        <div class="fallback"><div class="top">${c.top}</div><div class="art">${art}</div><div class="name">${esc(c.name)}</div></div>
+        <img src="${imgUrl(c, w)}" alt="" ${lazy ? 'loading="lazy"' : ''} decoding="async" onerror="this.remove()">
+      </div>
+    </div></button>`;
+}
+
+$('#deckStack').innerHTML = `<div class="card-back">${BACK_SVG}</div>`.repeat(3);
+
+/* ---------- Sekmeler ---------- */
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', x === b));
+  ['read', 'journal', 'deck'].forEach(id => $('#' + id).hidden = id !== b.dataset.tab);
+  if (b.dataset.tab === 'journal') renderJournal();
+  if (b.dataset.tab === 'deck') renderDeck();
+  window.scrollTo(0, 0);
+}));
+
+/* ---------- Kurulum ---------- */
+let spreadId = 'three';
+$('#spreadChips').innerHTML = SPREADS.filter(s => !s.retired).map(s =>
+  `<button class="chip" data-id="${s.id}" aria-pressed="${s.id === spreadId}">${s.name} <small>· ${s.short}</small></button>`).join('');
+$('#spreadChips').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  spreadId = b.dataset.id;
+  document.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x === b));
+});
+
+/* ---------- Açılım ---------- */
+let reading = null;
+
+$('#drawBtn').addEventListener('click', () => {
+  const spread = SPREADS.find(s => s.id === spreadId);
+  const allowRev = $('#reversals').checked;
+  const drawn = shuffle([...DECK]).slice(0, spread.positions.length)
+    .map(c => ({ id: c.id, rev: allowRev && randInt(2) === 1, flipped: false }));
+  reading = { question: $('#q').value.trim(), spreadId, allowRev, cards: drawn, date: Date.now(), saved: false };
+
+  // Karıştırma sırasında görselleri önceden yükle
+  drawn.forEach(d => { new Image().src = imgUrl(BY_ID[d.id], 480); });
+
+  $('#setup').hidden = true; $('#shuffleView').hidden = false;
+  setTimeout(() => { $('#shuffleView').hidden = true; renderReading(); }, 1600);
+});
+
+function renderReading() {
+  const spread = SPREADS.find(s => s.id === reading.spreadId);
+  $('#readingView').hidden = false;
+  $('#rQuestion').textContent = reading.question ? `“${reading.question}”` : '';
+  $('#rSpread').textContent = spread.name;
+  const el = $('#spread');
+  el.className = 'spread n' + spread.positions.length;
+  el.innerHTML = reading.cards.map((d, i) => `
+    <div class="slot" style="animation-delay:${i * 90}ms">
+      ${cardHTML(BY_ID[d.id], { rev: d.rev, flipped: d.flipped, attrs: `data-i="${i}"` })}
+      <div class="pos">${spread.positions.length > 3 ? `<span class="num">${i + 1}.</span> ` : ''}${esc(spread.positions[i][0])}</div>
+      <div class="cname" id="cname${i}"></div>
+    </div>`).join('');
+  renderReadout();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function reveal(i) {
+  const d = reading.cards[i];
+  if (d.flipped) return;
+  d.flipped = true;
+  $(`.card[data-i="${i}"]`).classList.add('flipped');
+  $('#cname' + i).innerHTML = esc(BY_ID[d.id].name) + revTag(d.rev);
+  renderReadout();
+}
+
+$('#spread').addEventListener('click', e => {
+  const b = e.target.closest('.card'); if (!b) return;
+  const i = +b.dataset.i, d = reading.cards[i];
+  if (!d.flipped) reveal(i);
+  else openSheet(BY_ID[d.id], d.rev, SPREADS.find(s => s.id === reading.spreadId).positions[i]);
+});
+
+$('#revealAll').addEventListener('click', () => {
+  reading.cards.forEach((d, i) => setTimeout(() => reveal(i), i * 180));
+});
+
+$('#newReading').addEventListener('click', () => {
+  $('#readingView').hidden = true; $('#setup').hidden = false; $('#q').value = ''; reading = null;
+  $('#askAnswer').innerHTML = ''; $('#askBox').hidden = true; $('#askErr').hidden = true;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+function renderReadout() {
+  const spread = SPREADS.find(s => s.id === reading.spreadId);
+  const done = reading.cards.every(d => d.flipped);
+  $('#rHint').textContent = done ? 'Ayrıntılı anlamı için bir karta dokun' : 'Açmak için kartlara dokun';
+  $('#revealAll').hidden = done;
+  $('#newReading').hidden = !done;
+
+  let html = reading.cards.map((d, i) => {
+    if (!d.flipped) return '';
+    const c = BY_ID[d.id];
+    return `<div class="reading-item" data-i="${i}">
+      <h3>${esc(spread.positions[i][0])} <span class="muted" style="font-family:'Cormorant Garamond';font-size:15px;letter-spacing:0">· ${esc(spread.positions[i][1])}</span></h3>
+      <div><span class="card-name">${esc(c.name)}</span>${revTag(d.rev)}</div>
+      <div class="kw">${esc(d.rev ? c.rev : c.up)}</div>
+    </div>`;
+  }).join('');
+  if (done) html += summaryHTML(reading);
+  $('#readout').innerHTML = html;
+  if (done && !reading.ask && $('#askBox').hidden) {
+    $('#askBox').hidden = false;
+    $('#askQ').value = reading.question;
+  }
+
+  if (done && !reading.saved) {
+    reading.saved = true;
+    const j = store.get();
+    j.unshift({ question: reading.question, spreadId: reading.spreadId, date: reading.date, cards: reading.cards.map(({ id, rev }) => ({ id, rev })) });
+    if (store.set(j.slice(0, 200))) toast('Günlüğüne kaydedildi');
+  }
+}
+
+$('#readout').addEventListener('click', e => {
+  const it = e.target.closest('.reading-item[data-i]'); if (!it) return;
+  const i = +it.dataset.i, d = reading.cards[i];
+  openSheet(BY_ID[d.id], d.rev, SPREADS.find(s => s.id === reading.spreadId).positions[i]);
+});
+
+function summaryHTML(r) {
+  const sections = interpretReading(r.cards.map(d => ({ card: BY_ID[d.id], rev: d.rev })));
+  if (!sections) return '';
+  return `<div class="reading-item summary"><h3>Kartlarının hikâyesi</h3>${sections.map(sec =>
+    `<h4>${sec.title}</h4>${sec.items.map(t => `<p>${t}</p>`).join('')}`).join('')}</div>`;
+}
+
+/* ---------- Kartlara sor (Claude) ---------- */
+const stripTags = s => s.replace(/<[^>]+>/g, '');
+const paragraphs = text => text.split(/\n\s*\n/).map(p => `<p>${esc(p.trim())}</p>`).join('');
+function answerHTML(ask) {
+  return `<div class="reading-item summary answer"><h3>✨ Kartların cevabı</h3>
+    <p class="q">“${esc(ask.q)}”</p>${paragraphs(ask.a)}</div>`;
+}
+
+$('#askBtn').addEventListener('click', async () => {
+  const q = $('#askQ').value.trim();
+  if (!q) { $('#askQ').focus(); return; }
+  const spread = SPREADS.find(s => s.id === reading.spreadId);
+  const sections = interpretReading(reading.cards.map(d => ({ card: BY_ID[d.id], rev: d.rev }))) || [];
+  const payload = {
+    question: q,
+    spread: spread.name,
+    cards: reading.cards.map((d, i) => {
+      const c = BY_ID[d.id];
+      return { position: spread.positions[i][0], name: c.name, reversed: d.rev, keywords: d.rev ? c.rev : c.up };
+    }),
+    summary: sections.map(sec => `${sec.title}:\n${sec.items.map(stripTags).join('\n')}`).join('\n\n'),
+  };
+
+  const btn = $('#askBtn'), current = reading;
+  btn.disabled = true; $('#askQ').disabled = true; $('#askErr').hidden = true;
+  btn.innerHTML = '<span class="dots">Kartlar düşünüyor</span>';
+  try {
+    const res = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.answer) throw new Error(data.error || 'Şu an kartlara ulaşılamıyor.');
+    if (reading !== current) return; // kullanıcı bu arada yeni açılıma geçti
+    reading.ask = { q, a: data.answer };
+    $('#askBox').hidden = true;
+    $('#askAnswer').innerHTML = answerHTML(reading.ask);
+    $('#askAnswer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const j = store.get(), entry = j.find(e => e.date === reading.date);
+    if (entry) { entry.ask = reading.ask; store.set(j); }
+  } catch (err) {
+    // Hak harcanmaz; tekrar denenebilir
+    $('#askErr').textContent = err.message === 'Failed to fetch' ? 'İnternet bağlantısını kontrol et.' : err.message;
+    $('#askErr').hidden = false;
+  } finally {
+    btn.disabled = false; $('#askQ').disabled = false; btn.textContent = 'Sor';
+  }
+});
+
+/* ---------- Alt panel ---------- */
+function openSheet(c, rev = false, position = null) {
+  const meta = c.arcana === 'major'
+    ? `Büyük Arkana · ${c.top}`
+    : `${SUITS[c.suit].name} · ${SUITS[c.suit].element} · ${SUITS[c.suit].theme}`;
+  $('#sheet').innerHTML = `<div class="grab"></div>
+    <div class="sheet-head">${cardHTML(c, { rev, attrs: 'tabindex="-1"' })}
+      <div><h2>${esc(c.name)}${rev ? ' <span class="tag-rev" style="font-family:Cormorant Garamond;font-size:18px">ters</span>' : ''}</h2>
+      <div class="meta">${esc(meta)}</div></div></div>
+    ${position ? `<h4>Pozisyon: ${esc(position[0])}</h4><p>${esc(position[1])}</p>` : ''}
+    ${c.meaning ? `<h4>Anlamı</h4><p>${esc(c.meaning)}</p>` : ''}
+    <h4>Düz</h4><p class="${rev ? 'dim' : ''}">${esc(c.up)}</p>
+    <h4>Ters</h4><p class="${rev ? '' : 'dim'}">${esc(c.rev)}</p>`;
+  $('#sheet').classList.add('open'); $('#backdrop').classList.add('open');
+  $('#sheet').scrollTop = 0;
+}
+function closeSheet() { $('#sheet').classList.remove('open'); $('#backdrop').classList.remove('open'); }
+$('#backdrop').addEventListener('click', closeSheet);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+// Paneli aşağı kaydırarak kapat
+let touchY = null;
+$('#sheet').addEventListener('touchstart', e => { touchY = $('#sheet').scrollTop <= 0 ? e.touches[0].clientY : null; }, { passive: true });
+$('#sheet').addEventListener('touchend', e => { if (touchY !== null && e.changedTouches[0].clientY - touchY > 70) closeSheet(); touchY = null; });
+
+/* ---------- Günlük ---------- */
+function renderJournal() {
+  const j = store.get(), el = $('#journalList');
+  if (!j.length) { el.innerHTML = '<div class="panel center muted">Henüz açılım yok. Geçmiş açılımların burada görünecek.</div>'; return; }
+  el.innerHTML = j.map((r, idx) => {
+    const spread = SPREADS.find(s => s.id === r.spreadId);
+    const date = new Date(r.date).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' });
+    return `<details class="entry"><summary>
+        <div class="date">${esc(date.toLocaleUpperCase('tr-TR'))} · ${esc(spread.name.toLocaleUpperCase('tr-TR'))}</div>
+        <div class="q">${r.question ? `“${esc(r.question)}”` : '<span class="muted">Soru yok</span>'}</div>
+        <div class="muted" style="font-size:16px">${r.cards.map(d => esc(BY_ID[d.id].name) + (d.rev ? ' ↺' : '')).join(' · ')}</div>
+      </summary>
+      <ul>${r.cards.map((d, i) => { const c = BY_ID[d.id]; return `<li><b>${esc(spread.positions[i][0])}:</b> ${esc(c.name)}${revTag(d.rev)} — <span class="kw">${esc(d.rev ? c.rev : c.up)}</span></li>`; }).join('')}</ul>
+      ${summaryHTML(r)}
+      ${r.ask ? answerHTML(r.ask) : ''}
+      <button class="del" data-idx="${idx}">Bu açılımı sil</button>
+    </details>`;
+  }).join('');
+}
+$('#journalList').addEventListener('click', e => {
+  const b = e.target.closest('.del'); if (!b) return;
+  if (!confirm('Bu açılım silinsin mi?')) return;
+  const j = store.get(); j.splice(+b.dataset.idx, 1); store.set(j); renderJournal();
+});
+
+/* ---------- Deste ---------- */
+function renderDeck() {
+  if ($('#deck').dataset.ready) return;
+  const groups = [['Büyük Arkana', DECK.filter(c => c.arcana === 'major')],
+    ...Object.keys(SUITS).map(s => [`${SUITS[s].name} · ${SUITS[s].element}`, DECK.filter(c => c.suit === s)])];
+  $('#deck').innerHTML = groups.map(([title, cards]) =>
+    `<div class="deck-section"><h3>${title}</h3><div class="deck-grid">${cards.map(c =>
+      `<div class="tile">${cardHTML(c, { attrs: `data-id="${c.id}"`, w: 240, lazy: true })}<div class="cname">${esc(c.name)}</div></div>`).join('')}</div></div>`).join('');
+  $('#deck').dataset.ready = 1;
+}
+$('#deck').addEventListener('click', e => { const b = e.target.closest('.card'); if (b) openSheet(BY_ID[b.dataset.id]); });
+</script>
+</body>
+</html>
